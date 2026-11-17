@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AFTER THE ROADS — Post-Apocalyptic Bicycle Survival</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- 3D Scene Viewport -->
+    <div id="scene"></div>
+    <div id="vignette"></div>
+
+    <!-- Loading Screen -->
+    <div id="boot-loader">
+        <div class="spinner"></div>
+        <h2 style="letter-spacing:4px;">AFTER THE ROADS</h2>
+        <p style="font-size:12px;color:var(--paper-muted);margin-top:6px;">Preparing open roads, assembling bicycle frame and world maps…</p>
+    </div>
+
+    <!-- Heads-Up Display (HUD) -->
+    <div id="hud" class="hidden">
+        <!-- TOP LEFT: PLAYER VITALS -->
+        <div id="hud-vitals" class="hud-panel">
+            <div class="meter-group">
+                <div class="meter-header"><span>HEALTH</span><span id="health-val">100</span></div>
+                <div class="meter-track"><div class="meter-fill" id="meter-health"></div></div>
+            </div>
+            <div class="meter-group">
+                <div class="meter-header"><span>STAMINA</span><span id="stamina-val">100</span></div>
+                <div class="meter-track"><div class="meter-fill" id="meter-stamina"></div></div>
+            </div>
+        </div>
+
+        <!-- TOP RIGHT: ENVIRONMENT / TIME / WEATHER -->
+        <div id="hud-environment" class="hud-panel">
+            <div class="eyebrow" id="hud-region">BENGALURU OUTSKIRTS</div>
+            <div id="hud-clock">08:30</div>
+            <div id="hud-weather">Monsoon Rain · 28°C</div>
+        </div>
+
+        <!-- TOP CENTER: COMPASS & DESTINATION DISTANCE -->
+        <div id="hud-nav">
+            <div id="compass-tape">· N · 0°</div>
+            <div id="destination-hud">TARGET: RAILWAY HALT 07 · 0.4 KM</div>
+        </div>
+
+        <!-- MIDDLE LEFT: ACTIVE EXPEDITION OBJECTIVE -->
+        <div id="hud-quest" class="hud-panel">
+            <div class="eyebrow">FIELD EXPEDITION</div>
+            <div id="hud-quest-title">The Last Transmission</div>
+            <div id="hud-quest-desc">Ride along the overgrown rail line to Halt 07 station and recover the locomotive emergency receiver.</div>
+        </div>
+
+        <!-- BOTTOM LEFT: SURVIVAL METRICS -->
+        <div id="hud-survival" class="hud-panel">
+            <div class="meter-group">
+                <div class="meter-header"><span>WATER</span><span id="water-val">85</span></div>
+                <div class="meter-track"><div class="meter-fill" id="meter-water"></div></div>
+            </div>
+            <div class="meter-group">
+                <div class="meter-header"><span>FOOD</span><span id="food-val">85</span></div>
+                <div class="meter-track"><div class="meter-fill" id="meter-food"></div></div>
+            </div>
+            <div class="meter-header" style="margin-top:6px;"><span>FATIGUE</span><span id="fatigue-val" style="color:var(--amber-accent);">15%</span></div>
+        </div>
+
+        <!-- BOTTOM RIGHT: SPEEDOMETER & BICYCLE TELEMETRY -->
+        <div id="hud-bike" class="hud-panel">
+            <div class="eyebrow" id="travel-mode-val">RIDING BICYCLE</div>
+            <div id="speed-display"><span id="speed-val">0</span> <small>KM/H</small></div>
+            <div id="bike-condition-val" style="font-size:10px;color:var(--paper-muted);margin:4px 0;">BIKE INTEGRITY: 85%</div>
+            <div class="bike-stats-row">
+                <span id="surface-val">SURFACE: ASPHALT</span>
+                <div class="gear-pills">
+                    <span class="gear-pill" data-gear="1">1</span>
+                    <span class="gear-pill active" data-gear="2">2</span>
+                    <span class="gear-pill" data-gear="3">3</span>
+                    <span class="gear-pill" data-gear="4">4</span>
+                    <span class="gear-pill" data-gear="5">5</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- RETICLE & INTERACTION PROMPT -->
+        <div id="crosshair"></div>
+        <div id="hud-prompt" class="hidden">
+            <kbd>E</kbd> <span id="prompt-text">Interact</span>
+        </div>
+
+        <!-- BOTTOM FOOTER CHEATSHEET -->
+        <div id="hud-footer">
+            <div class="key-shortcuts">
+                <span><kbd>WASD</kbd> Move/Steer</span>
+                <span><kbd>Shift</kbd> Sprint Torque</span>
+                <span><kbd>Space</kbd> Disc Brake</span>
+                <span><kbd>F</kbd> Mount / Dismount</span>
+                <span><kbd>1-5</kbd> Gears</span>
+                <span><kbd>J</kbd> Bunny Hop</span>
+                <span><kbd>L</kbd> Dynamo Light</span>
+                <span><kbd>B</kbd> Bell</span>
+                <span><kbd>E</kbd> Interact</span>
+            </div>
+            <div class="hud-btn-group">
+                <button class="secondary" data-ui="map">MAP · M</button>
+                <button class="secondary" data-ui="inventory">PACK · I</button>
+                <button class="secondary" data-ui="workshop">WORKSHOP</button>
+                <button class="secondary" data-ui="journal">JOURNAL · Q</button>
+                <button class="secondary" data-ui="save">SAVE</button>
+                <button class="secondary" data-ui="menu">MENU</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN MENU: EXPLORE THE WORLD -->
+    <div id="menu">
+        <header class="menu-header">
+            <div class="menu-brand">AFTER THE ROADS<span> /</span></div>
+            <div class="eyebrow">GLOBAL POST-APOCALYPTIC BICYCLE SURVIVAL · V2.0</div>
+        </header>
+
+        <main class="menu-body">
+            <!-- Left Side: World Intro & SVG Map -->
+            <section class="menu-intro">
+                <div class="eyebrow" style="margin-bottom:12px;">THE EARTH REMAINS. THE ROAD CONTINUES.</div>
+                <h1>EXPLORE<br>THE WORLD.</h1>
+                <p>Decades after the silence, the roads are still here. Choose a country to begin your journey. Pack light, maintain your bicycle, and discover what lies beyond the next bend.</p>
+
+                <!-- Interactive World Map SVG -->
+                <div class="world-map-container">
+                    <svg class="world-svg" viewBox="0 0 600 285" aria-label="World destination map">
+                        <g class="map-grid">
+                            <path d="M0 70H600M0 140H600M0 210H600M100 0V285M200 0V285M300 0V285M400 0V285M500 0V285" />
+                        </g>
+                        <g class="map-land">
+                            <!-- North America -->
+                            <path d="M30 56L61 39 100 42 117 30 167 38 190 59 170 74 156 100 132 112 121 137 103 130 94 106 77 96 59 74Z" />
+                            <!-- South America -->
+                            <path d="M139 143L162 145 188 167 187 196 170 223 159 255 148 235 147 202 132 178Z" />
+                            <!-- Eurasia -->
+                            <path d="M273 73L290 56 314 62 327 44 361 43 395 36 436 43 468 53 519 60 551 80 538 104 509 116 480 100 458 112 438 145 416 140 395 115 377 128 357 111 342 101 319 107 304 91 284 103 268 91Z" />
+                            <!-- Africa -->
+                            <path d="M286 107L318 108 345 133 350 165 327 191 309 217 291 204 285 173 267 141Z" />
+                            <!-- India -->
+                            <path d="M377 125L401 135 395 168 382 152Z" />
+                            <!-- Australia -->
+                            <path d="M478 211L510 199 544 208 558 232 539 254 506 249 481 236Z" />
+                        </g>
+
+                        <!-- Country Pins -->
+                        <g class="map-pin" data-country="usa">
+                            <circle cx="110" cy="89" r="5" />
+                            <text x="80" y="74">UNITED STATES</text>
+                        </g>
+                        <g class="map-pin" data-country="portugal">
+                            <circle cx="276" cy="95" r="4" />
+                            <text x="214" y="119">PORTUGAL</text>
+                        </g>
+                        <g class="map-pin" data-country="spain">
+                            <circle cx="288" cy="92" r="4" />
+                            <text x="294" y="80">SPAIN</text>
+                        </g>
+                        <g class="map-pin active" data-country="india">
+                            <circle cx="390" cy="139" r="6" />
+                            <text x="406" y="148">INDIA</text>
+                        </g>
+                    </svg>
+                </div>
+            </section>
+
+            <!-- Right Side: Destination Selector & Details Card -->
+            <section class="menu-selection">
+                <div class="eyebrow">01 / SELECT STARTING REGION</div>
+                <div class="country-grid" id="country-cards">
+                    <!-- Injected by JavaScript -->
+                </div>
+
+                <div class="country-details-box">
+                    <div class="eyebrow" id="dest-subtitle">BENGALURU OUTSKIRTS</div>
+                    <h2 id="dest-title" style="margin:4px 0 8px;">INDIA</h2>
+                    <p id="dest-desc">Past the overgrown technology campuses and flooded railway halts, a lone signal is still blinking. Monsoon rains wash over a city returning to the jungle.</p>
+
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-label">Terrain</div>
+                            <div class="stat-value" id="stat-terrain">Urban / Tropical / Foothills</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Danger</div>
+                            <div class="stat-value" id="stat-danger">★★★★☆</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Resources</div>
+                            <div class="stat-value" id="stat-resources">★★★☆☆</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Climate</div>
+                            <div class="stat-value" id="stat-climate">Warm · Monsoon Rain</div>
+                        </div>
+                    </div>
+
+                    <button id="btn-begin-journey" class="primary" style="width:100%;">
+                        <span>BEGIN EXPEDITION</span>
+                        <span>↗</span>
+                    </button>
+                </div>
+            </section>
+        </main>
+
+        <footer class="menu-footer">
+            <button class="secondary" id="btn-continue">CONTINUE SAVED JOURNEY</button>
+            <span class="quote-text">“Civilization is gone. Every road has a story.”</span>
+        </footer>
+    </div>
+
+    <!-- MODAL OVERLAY (Inventory / Workshop / Map / Journal / Dialogue) -->
+    <div id="modal-overlay" class="hidden">
+        <div class="modal-window wide" id="modal-container">
+            <div class="modal-header">
+                <div class="modal-title" id="modal-title">MODAL</div>
+                <button class="modal-close-btn" id="modal-close">✕</button>
+            </div>
+            <div class="modal-content" id="modal-body">
+                <!-- Injected dynamically by UIManager -->
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="hidden"></div>
+
+    <!-- MAIN MODULE ENTRY -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
