@@ -1,63 +1,55 @@
-// Persistence Engine - Save, Load & Slot Management
-const SAVE_STORAGE_KEY = 'after_the_roads_save_v2';
-
+// AFTER THE ROADS — Save & Load System
 export class SaveSystem {
     constructor(game) {
         this.game = game;
+        this.STORAGE_KEY = 'after_the_roads_save';
     }
 
-    save(isManual = false) {
-        try {
-            const g = this.game;
-            const saveData = {
-                version: 2,
-                savedAt: Date.now(),
-                countryId: g.currentCountry.id,
-                player: {
-                    position: { x: g.player.position.x, y: g.player.position.y, z: g.player.position.z },
-                    rotation: g.player.rotation,
-                    isRiding: g.player.isRiding,
-                    vitals: { ...g.player.vitals }
-                },
-                bicycle: {
-                    position: { x: g.bicycle.position.x, y: g.bicycle.position.y, z: g.bicycle.position.z },
-                    rotation: g.bicycle.rotation,
-                    condition: g.bicycle.condition,
-                    upgrades: { ...g.bicycle.upgrades }
-                },
-                inventory: { ...g.inventory.items },
-                quest: {
-                    activeQuestId: g.quest.activeQuest ? g.quest.activeQuest.id : null,
-                    stageIndex: g.quest.currentStageIndex,
-                    completedQuests: [...g.quest.completedQuests],
-                    collectedDocuments: [...g.quest.collectedDocuments]
-                },
-                time: g.dayNight.time
-            };
+    save() {
+        const g = this.game;
+        const saveData = {
+            version: 1,
+            timestamp: Date.now(),
+            player: {
+                vitals: { ...g.player.vitals },
+                position: { x: g.player.position.x, y: g.player.position.y, z: g.player.position.z },
+                rotation: g.player.rotation,
+                isRiding: g.player.isRiding
+            },
+            bicycle: {
+                position: { x: g.bicycle.position.x, y: g.bicycle.position.y, z: g.bicycle.position.z },
+                rotation: g.bicycle.rotation,
+                condition: g.bicycle.condition,
+                upgrades: { ...g.bicycle.upgrades }
+            },
+            inventory: { ...g.inventory.items },
+            quest: {
+                stageIndex: g.quest.currentStageIndex,
+                activeQuestId: g.quest.activeQuest ? g.quest.activeQuest.id : null,
+                completedQuests: [...g.quest.completedQuests],
+                collectedDocuments: [...g.quest.collectedDocuments]
+            },
+            time: g.dayNight.time
+        };
 
-            localStorage.setItem(SAVE_STORAGE_KEY, JSON.stringify(saveData));
-            if (isManual) {
-                g.ui.showToast('💾 Journey saved successfully.');
-            }
+        try {
+            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(saveData));
+            g.ui.showToast('💾 Game Saved Successfully');
             return true;
-        } catch (err) {
-            console.warn('Save failed:', err);
-            if (isManual) {
-                g.ui.showToast('⚠️ Storage unavailable or full.');
-            }
+        } catch (e) {
+            console.error('Failed to save game:', e);
+            g.ui.showToast('❌ Failed to save game');
             return false;
         }
     }
 
     load() {
         try {
-            const raw = localStorage.getItem(SAVE_STORAGE_KEY);
+            const raw = localStorage.getItem(this.STORAGE_KEY);
             if (!raw) return null;
-            const data = JSON.parse(raw);
-            if (!data || data.version !== 2) return null;
-            return data;
-        } catch (err) {
-            console.warn('Load failed:', err);
+            return JSON.parse(raw);
+        } catch (e) {
+            console.error('Failed to load save:', e);
             return null;
         }
     }
@@ -69,10 +61,14 @@ export class SaveSystem {
     applySaveData(data) {
         const g = this.game;
 
-        if (data.player && data.player.vitals) {
-            Object.assign(g.player.vitals, data.player.vitals);
-            g.player.position.set(data.player.position.x, data.player.position.y, data.player.position.z);
-            g.player.rotation = data.player.rotation;
+        if (data.player) {
+            if (data.player.vitals) Object.assign(g.player.vitals, data.player.vitals);
+            if (data.player.position) g.player.position.set(data.player.position.x, data.player.position.y, data.player.position.z);
+            if (data.player.rotation !== undefined) g.player.rotation = data.player.rotation;
+            // Restore player mounted/riding state (KAN-24)
+            if (data.player.isRiding && g.player.mountBicycle && g.bicycle) {
+                g.player.mountBicycle(g.bicycle);
+            }
         }
 
         if (data.bicycle) {
@@ -92,6 +88,10 @@ export class SaveSystem {
             g.quest.currentStageIndex = data.quest.stageIndex || 0;
             g.quest.completedQuests = data.quest.completedQuests || [];
             g.quest.collectedDocuments = data.quest.collectedDocuments || [];
+            // Rehydrate active quest matching saved activeQuestId (KAN-24)
+            if (data.quest.activeQuestId && typeof LOCATIONS !== 'undefined') {
+                g.quest.activeQuest = LOCATIONS.find(l => l.id === data.quest.activeQuestId) || null;
+            }
         }
 
         if (data.time) {
